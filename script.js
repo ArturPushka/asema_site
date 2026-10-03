@@ -5,13 +5,16 @@ const canvas = document.getElementById("heartCanvas");
 const ctx = canvas.getContext("2d");
 
 let words = [];
-let heartFinishedTime = 0;
+let particles = [];
+
 let animationStarted = false;
+let animationStartTime = 0;
+let heartFinishedTime = 0;
 
 
-/* =========================
+/* =====================================================
    CANVAS
-========================= */
+===================================================== */
 
 function resizeCanvas() {
     canvas.width = window.innerWidth;
@@ -23,9 +26,9 @@ resizeCanvas();
 window.addEventListener("resize", resizeCanvas);
 
 
-/* =========================
+/* =====================================================
    ФОРМА СЕРДЦА
-========================= */
+===================================================== */
 
 function heartFunction(t) {
 
@@ -39,20 +42,19 @@ function heartFunction(t) {
         - Math.cos(4 * t);
 
     return {
-        x: x,
-        y: y
+        x,
+        y
     };
 }
 
 
-/* =========================
-   СОЗДАНИЕ СЕРДЦА
-========================= */
+/* =====================================================
+   СОЗДАЁМ I LOVE YOU
+===================================================== */
 
 function createWords() {
 
     words = [];
-    heartFinishedTime = 0;
 
     const scale =
         Math.min(
@@ -61,12 +63,12 @@ function createWords() {
         ) / 34;
 
     /*
-       48 надписей.
-       Они располагаются именно
-       по контуру сердца.
+       Не слишком много надписей,
+       чтобы всё работало плавно.
     */
 
     const amount = 48;
+
 
     for (let i = 0; i < amount; i++) {
 
@@ -75,165 +77,446 @@ function createWords() {
             Math.PI *
             2;
 
+
         const heart =
             heartFunction(t);
+
 
         const targetX =
             canvas.width / 2 +
             heart.x * scale;
 
+
         const targetY =
             canvas.height / 2 -
             heart.y * scale;
 
+
         /*
-           Каждая надпись начинает
-           движение со случайного места.
+           Стартовая точка.
         */
 
+        const angle =
+            Math.random() *
+            Math.PI *
+            2;
+
+
+        const distance =
+            180 +
+            Math.random() * 350;
+
+
         const startX =
-            Math.random() * canvas.width;
+            canvas.width / 2 +
+            Math.cos(angle) * distance;
+
 
         const startY =
-            Math.random() * canvas.height;
+            canvas.height / 2 +
+            Math.sin(angle) * distance;
+
 
         words.push({
 
-            x: startX,
-            y: startY,
+            startX,
+            startY,
 
-            targetX: targetX,
-            targetY: targetY,
+            targetX,
+            targetY,
 
             progress: 0,
 
-            delay: i * 4,
-
-            speed: 0.018,
-
             rotation:
-                (Math.random() - 0.5) * 0.12,
+                (Math.random() - 0.5) * 0.18,
 
-            size: 16,
+            size:
+                14 + Math.random() * 3,
 
-            opacity: 0,
+            delay:
+                i * 35,
 
-            text: "I LOVE YOU"
+            text:
+                "I LOVE YOU"
         });
     }
 }
 
 
-/* =========================
-   АНИМАЦИЯ
-========================= */
+/* =====================================================
+   ЧАСТИЦЫ
+===================================================== */
 
-function animate() {
+function createParticles() {
 
-    ctx.clearRect(
+    particles = [];
+
+    const amount = 70;
+
+
+    for (let i = 0; i < amount; i++) {
+
+        const angle =
+            Math.random() *
+            Math.PI *
+            2;
+
+
+        const speed =
+            1 +
+            Math.random() * 3;
+
+
+        particles.push({
+
+            x:
+                canvas.width / 2,
+
+            y:
+                canvas.height / 2,
+
+            vx:
+                Math.cos(angle) * speed,
+
+            vy:
+                Math.sin(angle) * speed,
+
+            size:
+                1 +
+                Math.random() * 3,
+
+            life:
+                1,
+
+            decay:
+                0.006 +
+                Math.random() * 0.012
+        });
+    }
+}
+
+
+/* =====================================================
+   РИСУЕМ ЧАСТИЦЫ
+===================================================== */
+
+function drawParticles() {
+
+    for (const particle of particles) {
+
+        particle.x +=
+            particle.vx;
+
+        particle.y +=
+            particle.vy;
+
+        particle.vx *= 0.985;
+        particle.vy *= 0.985;
+
+        particle.life -=
+            particle.decay;
+
+
+        if (particle.life <= 0) {
+            continue;
+        }
+
+
+        ctx.save();
+
+
+        ctx.globalAlpha =
+            particle.life;
+
+
+        ctx.shadowBlur = 15;
+
+        ctx.shadowColor =
+            "#ff1744";
+
+
+        ctx.fillStyle =
+            "#ff718c";
+
+
+        ctx.beginPath();
+
+        ctx.arc(
+            particle.x,
+            particle.y,
+            particle.size,
+            0,
+            Math.PI * 2
+        );
+
+        ctx.fill();
+
+
+        ctx.restore();
+    }
+}
+
+
+/* =====================================================
+   СВЕТЯЩАЯСЯ ТОЧКА В ЦЕНТРЕ
+===================================================== */
+
+function drawCenterLight(time) {
+
+    const elapsed =
+        time -
+        animationStartTime;
+
+
+    /*
+       Первые 1.5 секунды —
+       появляется маленький свет.
+    */
+
+    const progress =
+        Math.min(
+            1,
+            elapsed / 1500
+        );
+
+
+    const pulse =
+        1 +
+        Math.sin(
+            time * 0.006
+        ) * 0.15;
+
+
+    const radius =
+        (15 + progress * 25) *
+        pulse;
+
+
+    const gradient =
+        ctx.createRadialGradient(
+
+            canvas.width / 2,
+            canvas.height / 2,
+            0,
+
+            canvas.width / 2,
+            canvas.height / 2,
+            radius * 4
+        );
+
+
+    gradient.addColorStop(
         0,
-        0,
-        canvas.width,
-        canvas.height
+        "rgba(255,255,255,1)"
     );
 
-    let finished = true;
+
+    gradient.addColorStop(
+        0.15,
+        "rgba(255,80,110,0.9)"
+    );
+
+
+    gradient.addColorStop(
+        0.45,
+        "rgba(255,20,70,0.25)"
+    );
+
+
+    gradient.addColorStop(
+        1,
+        "rgba(255,0,50,0)"
+    );
+
+
+    ctx.fillStyle =
+        gradient;
+
+
+    ctx.beginPath();
+
+
+    ctx.arc(
+        canvas.width / 2,
+        canvas.height / 2,
+        radius * 4,
+        0,
+        Math.PI * 2
+    );
+
+
+    ctx.fill();
+}
+
+
+/* =====================================================
+   СЕРДЦЕ ИЗ I LOVE YOU
+===================================================== */
+
+function drawWords(time) {
+
+    const elapsed =
+        time -
+        animationStartTime;
+
+
+    let allFinished = true;
 
 
     for (const word of words) {
 
-        if (word.delay > 0) {
+        const localTime =
+            elapsed -
+            word.delay;
 
-            word.delay--;
 
-            finished = false;
+        if (localTime < 0) {
+
+            allFinished = false;
 
             continue;
         }
 
 
-        word.progress +=
-            word.speed;
+        /*
+           Анимация сбора сердца.
+        */
+
+        const duration = 2400;
 
 
-        if (word.progress < 1) {
-            finished = false;
-        }
+        let progress =
+            Math.min(
+                1,
+                localTime / duration
+            );
 
 
-        if (word.progress > 1) {
-            word.progress = 1;
+        if (progress < 1) {
+            allFinished = false;
         }
 
 
         /*
-           Плавное замедление.
+           Кубическая плавность.
         */
 
         const ease =
             1 -
             Math.pow(
-                1 - word.progress,
+                1 - progress,
                 3
             );
 
 
+        /*
+           Во время полёта слова
+           слегка закручиваются.
+        */
+
+        const swirl =
+            (1 - ease) *
+            Math.sin(
+                progress * Math.PI * 3
+            ) *
+            35;
+
+
+        const dx =
+            word.targetX -
+            word.startX;
+
+
+        const dy =
+            word.targetY -
+            word.startY;
+
+
+        const distance =
+            Math.sqrt(
+                dx * dx +
+                dy * dy
+            );
+
+
+        const angle =
+            Math.atan2(
+                dy,
+                dx
+            );
+
+
         const x =
-            word.x +
-            (
-                word.targetX -
-                word.x
-            ) * ease;
+            word.startX +
+            dx * ease +
+            Math.cos(angle + Math.PI / 2)
+            * swirl *
+            Math.min(1, distance / 300);
 
 
         const y =
-            word.y +
-            (
-                word.targetY -
-                word.y
-            ) * ease;
+            word.startY +
+            dy * ease +
+            Math.sin(angle + Math.PI / 2)
+            * swirl *
+            Math.min(1, distance / 300);
 
 
-        word.opacity =
+        /*
+           Появление слов.
+        */
+
+        const opacity =
             Math.min(
                 1,
-                word.progress * 2
+                progress * 2.5
             );
 
 
         ctx.save();
 
-        ctx.translate(x, y);
 
-        ctx.rotate(word.rotation);
+        ctx.translate(
+            x,
+            y
+        );
+
+
+        ctx.rotate(
+            word.rotation *
+            (1 - ease)
+        );
+
+
+        ctx.globalAlpha =
+            opacity;
 
 
         /*
-           Красивое свечение
-           надписей.
+           Свечение.
         */
 
-        ctx.shadowBlur = 14;
+        ctx.shadowBlur = 16;
 
         ctx.shadowColor =
             "#ff1744";
 
+
         ctx.fillStyle =
-            `rgba(
-                255,
-                55,
-                85,
-                ${word.opacity}
-            )`;
+            "#ff5475";
+
 
         ctx.font =
             `bold ${word.size}px Arial`;
 
+
         ctx.textAlign =
             "center";
 
+
         ctx.textBaseline =
             "middle";
+
 
         ctx.fillText(
             word.text,
@@ -241,50 +524,57 @@ function animate() {
             0
         );
 
+
         ctx.restore();
     }
 
 
-    /*
-       Сердце полностью собрано.
-    */
-
-    if (finished) {
+    if (allFinished) {
 
         if (heartFinishedTime === 0) {
 
             heartFinishedTime =
-                Date.now();
+                time;
         }
 
-        drawFinalEffect();
+        return true;
     }
 
 
-    requestAnimationFrame(animate);
+    return false;
 }
 
 
-/* =========================
-   ФИНАЛ
-========================= */
+/* =====================================================
+   СВЕЧЕНИЕ ВНУТРИ СЕРДЦА
+===================================================== */
 
-function drawFinalEffect() {
+function drawHeartGlow(time) {
 
-    const time =
-        Date.now();
+    if (heartFinishedTime === 0) {
+        return;
+    }
 
 
-    /*
-       Мягкое свечение
-       внутри сердца.
-    */
+    const elapsed =
+        time -
+        heartFinishedTime;
+
 
     const pulse =
-        0.08 +
+        1 +
         Math.sin(
-            time * 0.003
-        ) * 0.03;
+            elapsed * 0.004
+        ) * 0.08;
+
+
+    const radius =
+        Math.min(
+            canvas.width,
+            canvas.height
+        ) *
+        0.28 *
+        pulse;
 
 
     const gradient =
@@ -293,31 +583,30 @@ function drawFinalEffect() {
             canvas.width / 2,
             canvas.height / 2,
 
-            20,
+            0,
 
             canvas.width / 2,
             canvas.height / 2,
 
-            Math.min(
-                canvas.width,
-                canvas.height
-            ) * 0.4
+            radius
         );
 
 
     gradient.addColorStop(
         0,
-        `rgba(
-            255,
-            0,
-            60,
-            ${pulse}
-        )`
+        "rgba(255,40,80,0.18)"
     );
+
+
+    gradient.addColorStop(
+        0.4,
+        "rgba(255,20,70,0.07)"
+    );
+
 
     gradient.addColorStop(
         1,
-        "rgba(0,0,0,0)"
+        "rgba(255,0,50,0)"
     );
 
 
@@ -325,17 +614,32 @@ function drawFinalEffect() {
         gradient;
 
 
-    ctx.fillRect(
+    ctx.beginPath();
+
+
+    ctx.arc(
+        canvas.width / 2,
+        canvas.height / 2,
+        radius,
         0,
-        0,
-        canvas.width,
-        canvas.height
+        Math.PI * 2
     );
 
 
-    /* =========================
-       АСЕМА В ЦЕНТРЕ СЕРДЦА
-    ========================= */
+    ctx.fill();
+}
+
+
+/* =====================================================
+   АСЕМА
+===================================================== */
+
+function drawAsema(time) {
+
+    if (heartFinishedTime === 0) {
+        return;
+    }
+
 
     const elapsed =
         time -
@@ -343,8 +647,8 @@ function drawFinalEffect() {
 
 
     /*
-       Небольшая пауза после
-       завершения сердца.
+       Ждём немного после
+       сборки сердца.
     */
 
     const appear =
@@ -352,7 +656,7 @@ function drawFinalEffect() {
             1,
             Math.max(
                 0,
-                (elapsed - 700) / 1200
+                (elapsed - 900) / 1300
             )
         );
 
@@ -363,10 +667,16 @@ function drawFinalEffect() {
 
 
     /*
-       Лёгкое пульсирование.
+       Небольшое увеличение
+       при появлении.
     */
 
-    const textPulse =
+    const scale =
+        0.75 +
+        appear * 0.25;
+
+
+    const pulse =
         1 +
         Math.sin(
             time * 0.003
@@ -377,9 +687,7 @@ function drawFinalEffect() {
 
 
     /*
-       ВОТ ЗДЕСЬ НАДПИСЬ
-       ПОПАДАЕТ РОВНО В ЦЕНТР
-       СЕРДЦА.
+       СТРОГО ЦЕНТР СЕРДЦА.
     */
 
     ctx.translate(
@@ -389,8 +697,8 @@ function drawFinalEffect() {
 
 
     ctx.scale(
-        textPulse,
-        textPulse
+        scale * pulse,
+        scale * pulse
     );
 
 
@@ -401,23 +709,24 @@ function drawFinalEffect() {
     ctx.textAlign =
         "center";
 
+
     ctx.textBaseline =
         "middle";
 
 
-    /* =========================
-       ШРИФТ АСЕМА
-    ========================= */
+    /*
+       Элегантный читаемый шрифт.
+    */
 
     ctx.font =
-        'italic 64px Georgia, "Times New Roman", serif';
+        'italic 66px Georgia, "Times New Roman", serif';
 
 
     /*
-       Большое мягкое свечение.
+       Большое свечение.
     */
 
-    ctx.shadowBlur = 35;
+    ctx.shadowBlur = 40;
 
     ctx.shadowColor =
         "#ff1744";
@@ -435,9 +744,7 @@ function drawFinalEffect() {
 
 
     /*
-       Второй слой делает
-       буквы более красивыми
-       и хорошо читаемыми.
+       Розовый второй слой.
     */
 
     ctx.shadowBlur = 12;
@@ -461,20 +768,189 @@ function drawFinalEffect() {
 }
 
 
-/* =========================
+/* =====================================================
+   ФИНАЛЬНАЯ ВСПЫШКА
+===================================================== */
+
+function drawFinalFlash(time) {
+
+    if (heartFinishedTime === 0) {
+        return;
+    }
+
+
+    const elapsed =
+        time -
+        heartFinishedTime;
+
+
+    /*
+       Маленькая вспышка
+       в момент завершения сердца.
+    */
+
+    if (
+        elapsed > 100 &&
+        elapsed < 700
+    ) {
+
+        const progress =
+            (elapsed - 100) / 600;
+
+
+        const alpha =
+            0.12 *
+            (1 - progress);
+
+
+        const gradient =
+            ctx.createRadialGradient(
+
+                canvas.width / 2,
+                canvas.height / 2,
+                0,
+
+                canvas.width / 2,
+                canvas.height / 2,
+                Math.min(
+                    canvas.width,
+                    canvas.height
+                ) * 0.5
+            );
+
+
+        gradient.addColorStop(
+            0,
+            `rgba(
+                255,
+                255,
+                255,
+                ${alpha}
+            )`
+        );
+
+
+        gradient.addColorStop(
+            0.25,
+            `rgba(
+                255,
+                60,
+                100,
+                ${alpha}
+            )`
+        );
+
+
+        gradient.addColorStop(
+            1,
+            "rgba(255,0,0,0)"
+        );
+
+
+        ctx.fillStyle =
+            gradient;
+
+
+        ctx.fillRect(
+            0,
+            0,
+            canvas.width,
+            canvas.height
+        );
+    }
+}
+
+
+/* =====================================================
+   ОСНОВНОЙ ЦИКЛ
+===================================================== */
+
+function animate() {
+
+    const time =
+        Date.now();
+
+
+    /*
+       Полностью чёрный фон.
+    */
+
+    ctx.fillStyle =
+        "#000000";
+
+
+    ctx.fillRect(
+        0,
+        0,
+        canvas.width,
+        canvas.height
+    );
+
+
+    /*
+       Центральное свечение.
+    */
+
+    drawCenterLight(time);
+
+
+    /*
+       Частицы.
+    */
+
+    drawParticles();
+
+
+    /*
+       I LOVE YOU.
+    */
+
+    drawWords(time);
+
+
+    /*
+       Свечение сердца.
+    */
+
+    drawHeartGlow(time);
+
+
+    /*
+       Финальная вспышка.
+    */
+
+    drawFinalFlash(time);
+
+
+    /*
+       АСЕМА.
+    */
+
+    drawAsema(time);
+
+
+    requestAnimationFrame(
+        animate
+    );
+}
+
+
+/* =====================================================
    КНОПКА
-========================= */
+===================================================== */
 
 button.addEventListener(
     "click",
     () => {
 
         /*
-           Первый экран исчезает.
+           Первый экран красиво
+           увеличивается и исчезает.
         */
 
         startScreen.style.opacity =
             "0";
+
 
         startScreen.style.transform =
             "scale(1.08)";
@@ -486,20 +962,27 @@ button.addEventListener(
                 startScreen.style.display =
                     "none";
 
+
                 heartScreen.style.display =
                     "flex";
 
 
                 /*
-                   Создаём сердце.
+                   Подготовка.
                 */
 
                 createWords();
 
+                createParticles();
 
-                /*
-                   Запускаем анимацию.
-                */
+
+                animationStartTime =
+                    Date.now();
+
+
+                heartFinishedTime =
+                    0;
+
 
                 if (!animationStarted) {
 
