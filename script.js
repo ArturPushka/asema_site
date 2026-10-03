@@ -60,59 +60,42 @@ function createWords() {
             canvas.height
         ) / 34;
 
-
     /*
-       48 надписей —
-       достаточно для красивого
-       и узнаваемого сердца.
+       48 надписей.
+       Они располагаются именно
+       по контуру сердца.
     */
 
     const amount = 48;
 
-
     for (let i = 0; i < amount; i++) {
-
-        /*
-           Равномерно распределяем
-           надписи по контуру сердца.
-        */
 
         const t =
             (i / amount) *
             Math.PI *
             2;
 
-
         const heart =
             heartFunction(t);
 
-
         const targetX =
-            canvas.width / 2
-            +
+            canvas.width / 2 +
             heart.x * scale;
 
-
         const targetY =
-            canvas.height / 2
-            -
+            canvas.height / 2 -
             heart.y * scale;
 
-
         /*
-           Начальная позиция —
-           случайная точка экрана.
+           Каждая надпись начинает
+           движение со случайного места.
         */
 
         const startX =
-            Math.random() *
-            canvas.width;
-
+            Math.random() * canvas.width;
 
         const startY =
-            Math.random() *
-            canvas.height;
-
+            Math.random() * canvas.height;
 
         words.push({
 
@@ -147,12 +130,6 @@ function createWords() {
 
 function animate() {
 
-    /*
-       Очищаем экран каждый кадр,
-       чтобы надписи не превращались
-       в хаотичные следы.
-    */
-
     ctx.clearRect(
         0,
         0,
@@ -160,16 +137,10 @@ function animate() {
         canvas.height
     );
 
-
     let finished = true;
 
 
     for (const word of words) {
-
-        /*
-           Небольшая задержка
-           между надписями.
-        */
 
         if (word.delay > 0) {
 
@@ -196,8 +167,7 @@ function animate() {
 
 
         /*
-           Плавное замедление
-           перед остановкой.
+           Плавное замедление.
         */
 
         const ease =
@@ -209,8 +179,7 @@ function animate() {
 
 
         const x =
-            word.x
-            +
+            word.x +
             (
                 word.targetX -
                 word.x
@@ -218,17 +187,12 @@ function animate() {
 
 
         const y =
-            word.y
-            +
+            word.y +
             (
                 word.targetY -
                 word.y
             ) * ease;
 
-
-        /*
-           Плавное появление.
-        */
 
         word.opacity =
             Math.min(
@@ -239,27 +203,20 @@ function animate() {
 
         ctx.save();
 
+        ctx.translate(x, y);
 
-        ctx.translate(
-            x,
-            y
-        );
-
-
-        ctx.rotate(
-            word.rotation
-        );
+        ctx.rotate(word.rotation);
 
 
         /*
-           Красное свечение.
+           Красивое свечение
+           надписей.
         */
 
         ctx.shadowBlur = 14;
 
         ctx.shadowColor =
             "#ff1744";
-
 
         ctx.fillStyle =
             `rgba(
@@ -269,18 +226,14 @@ function animate() {
                 ${word.opacity}
             )`;
 
-
         ctx.font =
             `bold ${word.size}px Arial`;
-
 
         ctx.textAlign =
             "center";
 
-
         ctx.textBaseline =
             "middle";
-
 
         ctx.fillText(
             word.text,
@@ -288,14 +241,12 @@ function animate() {
             0
         );
 
-
         ctx.restore();
     }
 
 
     /*
-       Когда сердце полностью собрано,
-       запускаем финальный эффект.
+       Сердце полностью собрано.
     */
 
     if (finished) {
@@ -306,19 +257,16 @@ function animate() {
                 Date.now();
         }
 
-
         drawFinalEffect();
     }
 
 
-    requestAnimationFrame(
-        animate
-    );
+    requestAnimationFrame(animate);
 }
 
 
 /* =========================
-   ФИНАЛЬНЫЙ ЭФФЕКТ
+   ФИНАЛ
 ========================= */
 
 function drawFinalEffect() {
@@ -328,8 +276,8 @@ function drawFinalEffect() {
 
 
     /*
-       Мягкое красное свечение
-       вокруг сердца.
+       Мягкое свечение
+       внутри сердца.
     */
 
     const pulse =
@@ -345,7 +293,7 @@ function drawFinalEffect() {
             canvas.width / 2,
             canvas.height / 2,
 
-            30,
+            20,
 
             canvas.width / 2,
             canvas.height / 2,
@@ -353,7 +301,7 @@ function drawFinalEffect() {
             Math.min(
                 canvas.width,
                 canvas.height
-            ) * 0.45
+            ) * 0.4
         );
 
 
@@ -366,7 +314,6 @@ function drawFinalEffect() {
             ${pulse}
         )`
     );
-
 
     gradient.addColorStop(
         1,
@@ -387,8 +334,8 @@ function drawFinalEffect() {
 
 
     /* =========================
-       НАДПИСЬ АСЕМА
-========================= */
+       АСЕМА В ЦЕНТРЕ СЕРДЦА
+    ========================= */
 
     const elapsed =
         time -
@@ -396,19 +343,16 @@ function drawFinalEffect() {
 
 
     /*
-       АСЕМА появляется
-       немного после сердца.
+       Небольшая пауза после
+       завершения сердца.
     */
 
     const appear =
         Math.min(
             1,
-
             Math.max(
                 0,
-                (
-                    elapsed - 700
-                ) / 1400
+                (elapsed - 700) / 1200
             )
         );
 
@@ -419,7 +363,7 @@ function drawFinalEffect() {
 
 
     /*
-       Очень лёгкое пульсирование.
+       Лёгкое пульсирование.
     */
 
     const textPulse =
@@ -431,6 +375,12 @@ function drawFinalEffect() {
 
     ctx.save();
 
+
+    /*
+       ВОТ ЗДЕСЬ НАДПИСЬ
+       ПОПАДАЕТ РОВНО В ЦЕНТР
+       СЕРДЦА.
+    */
 
     ctx.translate(
         canvas.width / 2,
@@ -451,24 +401,23 @@ function drawFinalEffect() {
     ctx.textAlign =
         "center";
 
-
     ctx.textBaseline =
         "middle";
 
 
     /* =========================
-       КРАСИВЫЙ ЧИТАЕМЫЙ ШРИФТ
-========================= */
+       ШРИФТ АСЕМА
+    ========================= */
 
     ctx.font =
         'italic 64px Georgia, "Times New Roman", serif';
 
 
     /*
-       Основное белое свечение.
+       Большое мягкое свечение.
     */
 
-    ctx.shadowBlur = 32;
+    ctx.shadowBlur = 35;
 
     ctx.shadowColor =
         "#ff1744";
@@ -486,8 +435,9 @@ function drawFinalEffect() {
 
 
     /*
-       Второй слой делает буквы
-       более мягкими и яркими.
+       Второй слой делает
+       буквы более красивыми
+       и хорошо читаемыми.
     */
 
     ctx.shadowBlur = 12;
@@ -512,7 +462,7 @@ function drawFinalEffect() {
 
 
 /* =========================
-   КНОПКА СЮРПРИЗА
+   КНОПКА
 ========================= */
 
 button.addEventListener(
@@ -520,12 +470,11 @@ button.addEventListener(
     () => {
 
         /*
-           Плавно убираем первый экран.
+           Первый экран исчезает.
         */
 
         startScreen.style.opacity =
             "0";
-
 
         startScreen.style.transform =
             "scale(1.08)";
@@ -534,13 +483,8 @@ button.addEventListener(
         setTimeout(
             () => {
 
-                /*
-                   Показываем чёрный экран.
-                */
-
                 startScreen.style.display =
                     "none";
-
 
                 heartScreen.style.display =
                     "flex";
@@ -554,8 +498,7 @@ button.addEventListener(
 
 
                 /*
-                   Запускаем анимацию
-                   только один раз.
+                   Запускаем анимацию.
                 */
 
                 if (!animationStarted) {
